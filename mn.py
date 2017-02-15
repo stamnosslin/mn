@@ -7,11 +7,17 @@ in this module will save me some time.
 Mats Nilsson (MN)
 Gosta Ekman Laboratory, Department of Psychology, Stockholm University
 
-MN: 2016-04-06; Revised: 2017-02-03
+MN: 2016-04-06; Revised: 2017-02-14
 '''
 
 import numpy as np
 import scipy.signal # for convolution
+import os  # to clear console
+
+def cls():
+    ''' To clear the python console'''
+    os.system('cls' if os.name == 'nt' else 'clear')
+
 
 def calculate_amplitude(monosignal, type = 'rms', unit = 'level'):
     ''' Calculates the amplitude of a mono signal. See Keyword arguments for 
@@ -208,7 +214,6 @@ def hipass(monosignal, fc = 0.05, b = 0.05):
     Return:
     s = monosignal (numpy array).    
     '''
-
     N = int(np.ceil((4 / b)))
     if not N % 2: N += 1  # Make sure that N is odd.
     n = np.arange(N)
@@ -307,25 +312,43 @@ def butter_bandpass(signal, center, bandwidth, order = 5, fs = 48000.0):
     low = f1 / nyq
     high = f2 / nyq
     
-    b, a = butter(order, [low, high], btype = 'band')
-    out = lfilter(b, a, signal)
+    b, a = scipy.signal.butter(order, [low, high], btype = 'band')
+    out = scipy.signal.lfilter(b, a, signal)
     return out
 
-def calculate_bands(signal, center, bandwidth, order = 5, fs = 48000.0):
-    '''Butterworth bandpass digital filter applied to monosignal (1xn numpy array). 
+    
+def cutoff_freq(center, octavewidth):
+    '''Calculate cut-off frequencies of band defined by center 
+    frequency and bandwidth in octaves. 
     
     Keyword arguments:
-    signal -- monosignal to be filtered (1xn numpy array)
     center --  center frequency, Hz (float)
-    bandwidth -- bandwidth in octaves (float)
-    order -- filter order, default = 5 (int)
-    fs -- sampling frequency, default = 48000 (float)    
+    octavewidth -- bandwidth in octaves (float)
+
+    Return:
+    out -- low and high cut-off frequency (list, float)
+    '''    
+    q = (2**octavewidth)**(0.5) / (2**octavewidth - 1)
+    bw = center / q  # bw = bandwidth in Hz
+    f1 = ((center**2) / (2**octavewidth))**(0.5)
+    f2 = f1 + bw
+    out = [f1, f2]
+    return out
+
+    
+def exp_decay(monosignal, decay = 5.0, fs = 48000):
+    ''' Amplitude modulation of monosignal by decaying exponential
+
+    Keyword arguments:    
+    signal -- monosignal 1xn numpy array (float)
+    decay -- time in ms after which the decay reached -40 dB, default is 5 ms (float)
+    fs -- sampling frequency in samples per second, default = 48000 (int)
     
     Return:
-    out -- bandpassed monosignal (1xn numpy array)
-    '''    
-    nyq = 0.5 * fs
-    q = (2**bandwidth)**(0.5) / (2**bandwidth - 1)
-    bw = center / q  # bw = bandwidth in Hz
-    f1 = ((center**2) / (2**bandwidth))**(0.5)
-    f2 = f1 + bw    
+    out -- modulated monosignal, 1xn numpy array (float)
+    '''
+    t  = np.arange(len(monosignal)) * (1000.0/fs)  # t in ms
+    decay = np.log(0.01) / decay  # decay to 0.01 (-40 dB) after decay ms
+    w = np.exp(decay * t)
+    out_signal = w * monosignal
+    return out_signal
