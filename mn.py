@@ -317,6 +317,26 @@ def butter_bandpass(signal, center, bandwidth, order = 5, fs = 48000.0):
     return out
 
     
+def butter_lowpass(signal, cutoff, order = 5, fs = 48000.0):
+    '''Butterworth lowpass digital filter applied to monosignal (1xn numpy array). 
+    
+    Keyword arguments:
+    signal -- monosignal to be filtered (1xn numpy array)
+    cutoff --  cut-off frequency, Hz (float)
+    order -- filter order, default = 5 (int)
+    fs -- sampling frequency, default = 48000 (float)    
+    
+    Return:
+    out -- lowpass filtered monosignal (1xn numpy array)
+    '''    
+
+    nyq = 0.5 * fs
+    normal_cutoff = cutoff / nyq
+    b, a = scipy.signal.butter(order, normal_cutoff, btype = 'low', analog = False)
+    out = scipy.signal.lfilter(b, a, signal)
+    return out
+
+    
 def cutoff_freq(center, octavewidth):
     '''Calculate cut-off frequencies of band defined by center 
     frequency and bandwidth in octaves. 
