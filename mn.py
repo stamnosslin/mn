@@ -7,7 +7,7 @@ in this module will save me some time.
 Mats Nilsson (MN)
 Gosta Ekman Laboratory, Department of Psychology, Stockholm University
 
-MN: 2016-04-06; Revised: 2017-02-14
+MN: 2016-04-06; Revised: 2017-10-02
 '''
 
 import numpy as np
