@@ -1,2 +1,2 @@
 # mn
-Some useful python functions
+Some useful python functions for creating and manipulating sounds. Examples using the mn.py library are contained in the scripts sdt.py, play_seq.py, and repetiton_pitch.py. The two first are demonstrations of basic psychophysical methods, the third shows how to generate repetition pitch stoimuli, to be used in one of the indiviual assignments of the course *Applied Psychophysics using Python and R*.
