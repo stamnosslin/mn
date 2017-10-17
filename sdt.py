@@ -24,14 +24,14 @@ sd.default.device = "Analog (1+2) (Babyface Analog (1+2))" # "ASIO4ALL" #
 def create_sn(ndur = 0.8, sdur = 0.4, snratio = -40, fs = 48000, rms = -20):      
     
     # Create noise and signal
-    noise = mn.create_wn(np.round(ndur * fs))
+    noise = mn.create_wn(int(np.round(ndur * fs)))
     signal = mn.create_sinusoid(freq = 1000, phase = 0, dur = sdur, fs = fs)
-    silence = np.zeros(np.round(((ndur - sdur) * fs)/2))
+    silence = np.zeros(int(np.round(((ndur - sdur) * fs)/2)))
     signal = np.concatenate((silence, signal, silence))
     signal = 10**(snratio/20.0) * signal  # Set gain of signal relative to noise
     
     # Combine noise and signal, and apply fade
-    combined = mn.fade(noise + signal, fs * 0.05)
+    combined = mn.fade(noise + signal, int(fs * 0.05))
     combined = mn.set_gain(combined, rms)
     
     # Make diotic
@@ -40,7 +40,7 @@ def create_sn(ndur = 0.8, sdur = 0.4, snratio = -40, fs = 48000, rms = -20):
     return s
 
 def play_sequence(ratiolist, fs = 48000):
-    message1 = psychopy.visual.TextStim(win, pos = [0, 0], color = (-1, -1, -1),
+    message1 = psychopy.visual.TextStim(win, pos = [0, 0.2], color = (-1, -1, -1),
                text = "Listen for the tone", height = 0.07)
     message2 = psychopy.visual.TextStim(win, pos = [0, -0.2], color = (-1, -1, -1),
               text = "Hit a key to start", height = 0.05)
@@ -50,7 +50,7 @@ def play_sequence(ratiolist, fs = 48000):
     psychopy.event.waitKeys()    
 
     for j in trials:
-        message1.text = "Did you hear the tone?"
+        message1.text = "Did you hear the tone?\n\n(integer + return to continue; Esc to abort)"
         message2.text = "Signal level = %.1f: " % (j)
         s = create_sn(snratio = j)
         sd.play(s, fs)
@@ -59,12 +59,26 @@ def play_sequence(ratiolist, fs = 48000):
         if int(show_sn) == 1:
             message2.draw()
         win.flip()
-        key = psychopy.event.waitKeys()
-        print 'stimulus = ' + str(j) + '; response = ' + str(key)
-        if key == ['escape']:
-            print '\n\nUser abort\n\n'
-            raise SystemExit  # Abort experiment
-        else: pass
+        
+        # Collect response
+        response = None
+        all_keys = np.array([])
+        while response is None:
+            key = psychopy.event.waitKeys(
+                  keyList=['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 
+                           'return', 'escape'])
+            all_keys = np.append(all_keys, key)
+
+            if key == ['return']:
+                r = all_keys[:-1]  # Remove 'return' key
+                r = ''.join(r)
+                print 'sn-ratio = ' + str(round(j, 1)) + '; response = ' + r
+                response = r
+            elif key == ['escape']:
+                print '\n\nUser abort\n\n'
+                raise SystemExit  # Abort experiment
+            else: pass
+
         win.flip()
         time.sleep(0.1)      
 
@@ -91,8 +105,8 @@ np.random.shuffle(trials)
 
 fs = 48000 
 
-print '\n\n\n-------------------------------------------------------------'
+print '\n\n\n\n\n\n\n\n\n\n-----------------------------------------------------'
 
 play_sequence(ratiolist = trials)
 
-print '-------------------------------------------------------------\n\n\n'
+print '-----------------------------------------------------\n\n\n\n\n\n\n\n\n\n'
