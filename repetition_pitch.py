@@ -4,7 +4,8 @@
 import numpy as np
 import sounddevice as sd
 import time  # Function time-sleep()
-import mn  # For generationg repetition pitch stimuli
+import mn  # For generating repetition pitch stimuli
+import soundfile as sf  # Just for demo of saving wavfile
 # ------------------------------------------------------------------------------
 
 
@@ -21,7 +22,7 @@ print '-------------------------------------------------------------------------
 
 # Set these parameters ---------------------------------------------------------
 fs = 48000  # Sampling frequency (samples per second)
-timeseparation = fs * 0.002  # Time-separation 2 ms
+timeseparation = fs * 0.008  # Time-separation 2 ms
 noisegain = -20.0  # Gain of first noise in dB (re max = 0 dB)
 repgain = -20.0  # Gain of repeatead noise (.0 makes it a float)
 # ------------------------------------------------------------------------------
@@ -45,6 +46,9 @@ rep_nosie = mn.set_equal(noise1, rep_noise, parameter = 'rms')
 print '\n\n\n---------------------- Now you hear a white noise'
 sd.play(noise1, fs)  # Play sound
 time.sleep(len(noise) / float(fs))  # Wait till sound has been played
+
+# Save wav-file
+sf.write('noise_please_delete.wav', noise1, fs)
 # ------------------------------------------------------------------------------
 
 
@@ -55,6 +59,9 @@ sd.play(rep_noise, fs)
 time.sleep(len(rep_noise) / float(fs))  # Wait till sound has been played
 print '\n\nTime separation (ms) = ', timeseparation / 48
 print 'Repetition level re first sound = ', repgain - noisegain
+
+# Save wav-file
+sf.write('repetition_pitch_please_delete.wav', rep_noise, fs)
 # ------------------------------------------------------------------------------
 
 
