@@ -76,5 +76,3 @@ print "Now you hear a tone in the RIGHT ear: 1 kHz, for 3 seconds"
 sd.play(right, fs)
 time.sleep(3.5)
 print '\nEnd soundcheck ------------------------------------------\n\n\n'
-
-sf.write('rigth_channel_please_delete.wav', right, fs)
