@@ -1,5 +1,5 @@
 # mn
-Some useful python functions for creating and manipulating sounds, stored in the file mn.py. Examples using these mn.py library are contained in these scripts:
+Some useful python functions for creating and manipulating sounds, stored in the file mn.py. These scripts provide examples of usage of the mn.py library:
 
 + **sdt.py** Demonstration of Signal Detection Theory, used for psychophysic classes
 + **classical.py** Demonstration of Constant stimuli, used for psychophysic classes
