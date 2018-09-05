@@ -132,5 +132,3 @@ def create_stimulus(level = 0, left = True, leadclick = True, cdur = 125, sgain 
     
     
     return stimulus
-
-create_stimulus(plot = True)
