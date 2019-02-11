@@ -411,7 +411,8 @@ def create_itdild(s, itd = 0, ild = 0):
 
 
 def create_leadlag(s, ici = 6, leaditd = 0, leadild = 0, lagitd = 0, 
-                    lagild = 0, llr = -10, before = 50, after = 50, nolead = False):
+                    lagild = 0, llr = -10, before = 100, after = 100, 
+                    leadonly = False, lagonly = False):
     '''Takes a mono signal as input and returns a stereo signal with a lead and 
     lag version of the input separated by a given inter-click-interval (onset-to-onset).
     Both lea dand lag may be given a specified ITD and/or ILD. The function uses
@@ -430,7 +431,8 @@ def create_leadlag(s, ici = 6, leaditd = 0, leadild = 0, lagitd = 0,
     llr -- Lag-to-lead ratio in dB. (float)
     before -- Silence (zeros) before the start of the lead-lag signal, in ms (float)
     after -- Silence (zeros) after the end of the lead-lag signal, in ms (float)
-    nolead -- Set to True to exclude the lead click (i.e. lag only), (logical)
+    leadonly -- Set to True to exclude the lag click (i.e. lead only), (logical)
+    lagonly -- Set to True to exclude the lead click (i.e. lag only), (logical)
 
     Return:
     leadlag -- Stereo signal, nx2 numpy array (float)
@@ -447,13 +449,18 @@ def create_leadlag(s, ici = 6, leaditd = 0, leadild = 0, lagitd = 0,
     # Lag signals      
     lag_left  = np.concatenate((zici, lag[:, 0])) * gllr
     lag_right = np.concatenate((zici, lag[:, 1])) * gllr
-   
+
+    if (leadonly):  # No lag = leadonly
+        lag_left = lag_left * 0
+        lag_right = lag_right * 0
+
     # Lead signals
     diff = len(lag_left) - len(lead[:, 0])
     zicifix = zici = np.zeros(diff)
     lead_left = np.concatenate((lead[:, 0], zicifix))
     lead_right = np.concatenate((lead[:, 1], zicifix))
-    if (nolead):
+
+    if (lagonly): # No lead = lagonly
         lead_left = lead_left * 0
         lead_right = lead_right * 0
 
