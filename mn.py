@@ -3,11 +3,11 @@
 
 ''' In this module, I have collected a number of functions that I tend to use
 and reinvent each time a write a new program. Hopefully, collecting functions
-in this module will save me some time.
+in this module will save me some time. Since 2019, intended for Python 3.
 Mats Nilsson (MN)
 Gosta Ekman Laboratory, Department of Psychology, Stockholm University
 
-MN: 2016-04-06; Revised: 2017-10-02
+MN: 2016-04-06; Revised: 2019-02-11
 '''
 
 import numpy as np
@@ -256,9 +256,9 @@ def set_equal(mono1, mono2, parameter = 'rms'):
         message2 = "max(abs(signal)) = " + str(np.max(np.abs(adjusted))) 
         message3 = ("number of samples >1 = " + 
                     str(np.sum(1 * (np.abs(adjusted) > 1))))
-        print message1
-        print message2
-        print message3
+        print(message1)
+        print(message2)
+        print(message3)
         
     return adjusted
 
@@ -283,9 +283,9 @@ def set_gain(mono, gaindb):
         message2 = "max(abs(signal)) = " + str(np.max(np.abs(gained))) 
         message3 = ("number of samples >1 = " + 
                     str(np.sum(1 * (np.abs(gained) > 1))))
-        print message1
-        print message2
-        print message3
+        print(message1)
+        print(message2)
+        print(message3)
  
     return gained
  
@@ -372,3 +372,108 @@ def exp_decay(monosignal, decay = 5.0, fs = 48000):
     w = np.exp(decay * t)
     out_signal = w * monosignal
     return out_signal
+
+
+def create_itdild(s, itd = 0, ild = 0):
+    '''Takes a mono signal as input and returns a stereo signal with a specified
+    ITD and/or ILD. Note that it is the same signal in both ears, except for the 
+    imposed time and level difference.
+
+    Keyword arguments:
+    s -- Mono signal, nx1 numpy array (float)
+    itd -- Interaural time differenece in ms, if negative favoring the left side, 
+           if positive favoring the right side (float)
+    ild -- Interaural level differenece in dB, if negative favoring the left side, 
+           if positive favoring the right side (float)
+
+    Return:
+    out -- Stereo signal, nx2 numpy array (float)
+    '''
+    
+    # Fix so negative itd/ild favores left side, and positive itd/ild favors right
+    itd_left = itd * 1 * (np.sign(itd) > 0)  # Positive or zero
+    zitd_left = np.zeros(int(itd_left * 48))
+    itd_right = itd * -1 * (np.sign(itd) < 0)# Positive or zero
+    zitd_right = np.zeros(int(itd_right * 48))
+    ild_left = ild * 1 * (np.sign(ild) > 0)  # Positive or zero
+    gild_left = 10**(-ild_left/20)
+    ild_right = ild * -1 * (np.sign(ild) < 0)# Positive or zero
+    gild_right = 10**(-ild_right/20)
+    
+    # Define signals (to make equal length, both channels itds are added to each channel)
+    left = np.concatenate((zitd_left, s, zitd_right)) * gild_left
+    right = np.concatenate((zitd_right, s, zitd_left)) * gild_right
+
+    # Make stereo
+    out = np.transpose(np.array([left, right]))
+
+    return out
+
+
+def create_leadlag(s, ici = 6, leaditd = 0, leadild = 0, lagitd = 0, 
+                    lagild = 0, llr = -10, before = 50, after = 50, nolead = False):
+    '''Takes a mono signal as input and returns a stereo signal with a lead and 
+    lag version of the input separated by a given inter-click-interval (onset-to-onset).
+    Both lea dand lag may be given a specified ITD and/or ILD. The function uses
+    the function mn.create_itdild() 
+
+    Keyword arguments:
+    s -- Mono signal, nx1 numpy array (float)
+    leaditd -- Interaural time difference in ms of lead signal, if negative  
+           favoring the left side, if positive favoring the right side (float)
+    leadild -- Interaural level difference in dB if lead signal, if negative 
+           favoring the left side, if positive favoring the right side (float)
+    lagditd -- Interaural time difference in ms of lag signal, if negative  
+           favoring the left side, if positive favoring the right side (float)
+    lagild -- Interaural level difference in dB if lad signal, if negative 
+           favoring the left side, if positive favoring the right side (float)
+    llr -- Lag-to-lead ratio in dB. (float)
+    before -- Silence (zeros) before the start of the lead-lag signal, in ms (float)
+    after -- Silence (zeros) after the end of the lead-lag signal, in ms (float)
+    nolead -- Set to True to exclude the lead click (i.e. lag only), (logical)
+
+    Return:
+    leadlag -- Stereo signal, nx2 numpy array (float)
+    '''
+
+    lead = create_itdild(s, itd = leaditd, ild = leadild)
+    lag = create_itdild(s, itd = lagitd, ild = lagild)
+
+    gllr = 10**(llr/20)
+    zici = np.zeros(int(ici * 48))
+    zbefore = np.zeros(int(before * 48))  #Silence before lead click
+    zafter = np.zeros(int(after * 48))  #Silence after lag click
+   
+    # Lag signals      
+    lag_left  = np.concatenate((zici, lag[:, 0])) * gllr
+    lag_right = np.concatenate((zici, lag[:, 1])) * gllr
+   
+    # Lead signals
+    diff = len(lag_left) - len(lead[:, 0])
+    zicifix = zici = np.zeros(diff)
+    lead_left = np.concatenate((lead[:, 0], zicifix))
+    lead_right = np.concatenate((lead[:, 1], zicifix))
+    if (nolead):
+        lead_left = lead_left * 0
+        lead_right = lead_right * 0
+
+    # Lead+lag    
+    leadlag_left = lag_left + lead_left
+    leadlag_left = np.concatenate((zbefore, leadlag_left, zafter)) 
+    leadlag_right = lag_right + lead_right
+    leadlag_right = np.concatenate((zbefore, leadlag_right, zafter)) 
+
+    # Make stereo
+    leadlag = np.transpose(np.array([leadlag_left, leadlag_right]))
+     
+    # Print warning if overload, that is, if any abs(sample-value) > 1
+    if (np.max(np.abs(leadlag)) > 1.0):
+        message1 = "WARNING: create_leadlag() generated overloaded signal!"
+        message2 = "max(abs(signal)) = " + str(np.max(np.abs(leadlag))) 
+        message3 = ("number of samples >1 = " + 
+                    str(np.sum(1 * (np.abs(leadlag) > 1.0))))
+        print(message1)
+        print(message2)
+        print(message3)
+
+    return leadlag
