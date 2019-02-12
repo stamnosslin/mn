@@ -484,3 +484,11 @@ def create_leadlag(s, ici = 6, leaditd = 0, leadild = 0, lagitd = 0,
         print(message3)
 
     return leadlag
+
+def ch_flip(signal):
+    ''' Flips left and right channel of input = 2d numpy array'''
+    s0 = signal[:, 0]
+    s1 = signal[:, 1]
+    sflip =  np.transpose(np.array([s1, s0]))    
+    return sflip 
+
